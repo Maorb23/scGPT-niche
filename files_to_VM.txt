@@ -1,0 +1,35 @@
+# File Transfer to RunPod VM: Process and Conclusions
+
+## Overview
+
+This document summarizes the process of transferring large files to a RunPod virtual machine, the challenges encountered, and the solutions implemented. It serves as a reference for future file transfers to cloud VMs.
+
+## Process Summary
+
+1. **Repository Preparation**
+   - Used `git filter-repo` to remove large files from Git history
+   - Created `.gitignore` to prevent re-adding large files
+   - Added `.gitkeep` files to maintain empty directory structure
+
+2. **Connection to RunPod VM**
+   - Identified correct SSH connection parameters (IP, port, username)
+   - Verified SSH key authentication
+   - Added the VM to known hosts
+
+3. **Directory Preparation**
+   - Created necessary directories on the VM
+   - Set appropriate permissions
+
+4. **File Transfer**
+   - Used SCP with correct parameters for large file transfer
+   - Verified successful transfer
+
+## Challenges and Solutions
+
+### Git Repository Management
+
+**Challenge**: Large files in Git history causing slow clones and pushes.  
+**Solution**: Used `git filter-repo` to remove large files from history while preserving the code.
+
+```bash
+git filter-repo --strip-blobs-bigger-than 50M
