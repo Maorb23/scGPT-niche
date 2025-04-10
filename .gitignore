@@ -1,0 +1,17 @@
+# Ignore specific file types (large data files)
+*.h5ad
+*.h5
+*.pt
+*.pth
+*.ckpt
+*.bin
+*.npy
+*.npz
+*.pkl
+*.pickle
+
+# Specific large files (if needed)
+data/base_dataset.h5ad
+models/best_model.pt
+
+# Keep folder structure with .gitkeep files
