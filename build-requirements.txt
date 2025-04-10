@@ -1,6 +1,0 @@
-# Build dependencies required for complex package installations
-wheel>=0.38.0
-setuptools>=42.0.0
-packaging>=21.0
-# PyTorch version that's compatible with flash-attn 1.0.2
-torch==2.6.0
