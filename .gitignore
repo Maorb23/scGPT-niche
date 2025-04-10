@@ -1,17 +1,64 @@
-# Ignore specific file types (large data files)
-*.h5ad
-*.h5
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Virtual Environments
+venv/
+venvc/
+ENV/
+
+# WandB
+wandb/
+*.wandb
+
+# Models and data
 *.pt
 *.pth
-*.ckpt
-*.bin
-*.npy
-*.npz
+*.h5
 *.pkl
-*.pickle
+*.model
+models/
+!models/.gitkeep
 
-# Specific large files (if needed)
-data/base_dataset.h5ad
-models/best_model.pt
+# Data files
+*.csv
+*.tsv
+*.parquet
+*.h5ad
+*.loom
+data/
+!data/.gitkeep
 
-# Keep folder structure with .gitkeep files
+# Logs
+logs/
+*.log
+
+# OS specific
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
