@@ -27,8 +27,8 @@ logger = logging.getLogger(__name__)
 
 
 @task
-def preprocess_task(dataset_path: str, describe: bool = False):
-    """Preprocess the data by embedding it using scGPT."""
+def preprocess_task(dataset_path: str, describe: bool = True):
+
     logger = prefect.get_run_logger()
     if not os.path.exists(dataset_path):
         raise FileNotFoundError(f"Dataset file not found: {dataset_path}")
@@ -36,10 +36,32 @@ def preprocess_task(dataset_path: str, describe: bool = False):
     preprocessor = Preprocess(dataset_path, describe)
     colon_adata, full_describe, N_genes = preprocessor.preprocess_data()
     if describe:
-        logger.info("Full describe...")
-        wandb.log({"full_describe": full_describe})
-        logger.info("N_genes and N_count the dataset...")
-        wandb.log({"N_genes": N_genes})
+        #full_describe_clean = full_describe.copy()
+        #for col in full_describe_clean.columns:
+            #if full_describe_clean[col].dtype == object:  # string columns
+                #full_describe_clean[col] = full_describe_clean[col].fillna("N/A")
+            #else:  # numeric columns
+                #full_describe_clean[col] = full_describe_clean[col].fillna(-1)  # or 0, or keep as NaN
+        logger.info("Plotting and logging cell distribution by sex...")
+
+        # Create the plot
+        sex_counts = colon_adata.obs['sex'].value_counts()
+        plt.figure(figsize=(4, 4))
+        sex_counts.plot(kind='bar')
+        plt.title("Cell Distribution by Sex")
+        plt.xlabel("Sex")
+        plt.ylabel("Count")
+        plt.tight_layout()
+
+        # Log the plot to WandB
+        wandb.log({"Sex Distribution Plot": wandb.Image(plt.gcf())})
+        plt.close()        
+        N_genes_clean = N_genes.fillna("N/A")
+        #full_table = wandb.Table(dataframe=full_describe_clean)
+        #wandb.log({"Full Describe": full_table})
+        # For N_genes
+        genes_table = wandb.Table(dataframe=N_genes_clean)
+        wandb.log({"Genes Count": genes_table})
     return colon_adata
     
 
@@ -94,12 +116,13 @@ def train_task(dataset_path: str, model_path: str, batch_size: int):
 
     return ref_embed_adata
 """
+
 @task
-def train_task(dataset_path: str, model_path: str, batch_size: int):
-    """Train by embedding the dataset using scGPT."""
-    trainer = scGPT_niche(dataset_path, model_path, batch_size)
-    colon_adata = sc.read_h5ad(dataset_path)
-    ref_embed_adata = trainer.train()
+def train_task(colon_path: str, model_path: str, batch_size: int):
+
+    trainer = scGPT_niche(colon_path, model_path, batch_size)
+    colon_adata = sc.read_h5ad(colon_path)
+    ref_embed_adata = trainer.embed()
     # Randomly select 10 indices
     num_samples = min(10, ref_embed_adata.shape[0])
     random_indices = np.random.choice(ref_embed_adata.shape[0], size=num_samples, replace=False)
@@ -117,7 +140,7 @@ def train_task(dataset_path: str, model_path: str, batch_size: int):
 
 @task
 def plot_task(ref_embed_adata):
-    """Plot UMAP from the embeddings and log it."""
+
     logger = prefect.get_run_logger()
 
     logger.info("Running Scanpy UMAP...")
@@ -168,8 +191,8 @@ def custom_plot_umap(positive_class, negative_class, cell_types, emb, desc):
 # -------------------------------------------------------
 
 @flow(name="scGPT Training and UMAP Flow")
-def main_flow(dataset_path: str, model_path: str, batch_size: int = 128, train: bool = True, plot: bool = True,
-              preprocess: bool = True, custom_plot: bool = False):
+def main_flow(dataset_path: str, colon_path, model_path: str, batch_size: int = 128, train: bool = True, plot: bool = True,
+              preprocess: bool = True, custom_plot: bool = True):
     """Flow to train the model and plot UMAP."""
     try:
         wandb.init(
@@ -186,13 +209,17 @@ def main_flow(dataset_path: str, model_path: str, batch_size: int = 128, train: 
     except wandb.errors.UsageError as e:
         print(f"wandb.init failed: {e}")
     if preprocess:
-        preprocess_task(dataset_path)
+        colon_adata = preprocess_task(dataset_path)
     if train:
-        ref_embed_adata = train_task(dataset_path, model_path, batch_size)
+        ref_embed_adata = train_task(colon_path, model_path, batch_size)
     if plot:
         plot_task(ref_embed_adata)
     if custom_plot:
-        custom_plot_umap(positive_class, negative_class, cell_types, emb, desc)
+        positive_class = "Crohn disease"
+        negative_class = "normal"
+
+        custom_plot_umap(positive_class, negative_class,
+                          colon_adata.obs['disease'].tolist(), ref_embed_adata.X, "Crohn disease")
 
     wandb.finish()
 
@@ -202,18 +229,25 @@ def main_flow(dataset_path: str, model_path: str, batch_size: int = 128, train: 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run scGPT training and UMAP visualization as a Prefect Flow.")
-    parser.add_argument("--dataset_path", type=str, default="data/base_dataset.h5ad", help="Path to the dataset.")
-    parser.add_argument("--model_path", type=str, default="models/best_model", help="Path to the scGPT model.")
+    parser.add_argument("--dataset_path", type=str, default="ydata/data/base_dataset.h5ad", help="Path to the dataset.")
+    parser.add_argument("--colon_path", type = str, default= "ydata/data/processed/colon_adata.h5ad")
+    parser.add_argument("--model_path", type=str, default="ydata/models/best_model", help="Path to the scGPT model.")
     parser.add_argument("--batch_size", type=int, default=128, help="Batch size for embedding.")
     parser.add_argument("--train", default = True, help="Whether to train the model.")
     parser.add_argument("--plot", default = True, help="Whether to plot UMAP.")
+    parser.add_argument("--preprocess", default = True, help="Whether to preprocess the data.")
+    parser.add_argument("--custom_plot", default = True, help="Whether to create a custom UMAP plot.")
     args = parser.parse_args()
 
     # Call the flow
     main_flow(
         dataset_path=args.dataset_path,
+        colon_path = args.colon_path,
         model_path=args.model_path,
         batch_size=args.batch_size,
         train=args.train,
-        plot=args.plot
+        plot=args.plot,
+        preprocess=args.preprocess,
+        custom_plot=args.custom_plot
     )
+
