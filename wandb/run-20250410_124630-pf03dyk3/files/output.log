@@ -1,0 +1,11 @@
+12:46:43.557 | [36mINFO[0m    | Task run 'train_task-1f2' - Embedding data using scGPT...
+scGPT - INFO - match 21003/27289 genes in vocabulary of size 60697.
+/workspace/venvc/lib/python3.10/site-packages/scgpt/model/model.py:77: UserWarning: flash-attn is not installed, using pytorch transformer instead. Set use_fast_transformer=False to avoid this warning. Installing flash-attn is highly recommended.
+  warnings.warn(
+Embedding cells: 100%|██████████████████████████████████████████████| 217/217 [06:17<00:00,  1.74s/it]
+/workspace/venvc/lib/python3.10/site-packages/anndata/_core/anndata.py:381: FutureWarning: The dtype argument is deprecated and will be removed in late 2024.
+  warnings.warn(
+12:53:08.587 | [36mINFO[0m    | Task run 'train_task-1f2' - Finished in state [32mCompleted[0m()
+12:53:08.803 | [36mINFO[0m    | Task run 'plot_task-b9d' - Running Scanpy UMAP...
+12:54:48.385 | [36mINFO[0m    | Task run 'plot_task-b9d' - UMAP plotting completed.
+12:54:48.388 | [36mINFO[0m    | Task run 'plot_task-b9d' - Finished in state [32mCompleted[0m()

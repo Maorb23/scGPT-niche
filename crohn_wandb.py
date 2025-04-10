@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
-
+import torch
+import numpy as np
 import argparse
 import os
 from pathlib import Path
@@ -62,11 +63,20 @@ def train_task(dataset_path: str, model_path: str, batch_size: int):
     # Log embedding shape
     wandb.log({"Embedding Shape": ref_embed_adata.X.shape})
 
-    # Create table for wandb
-    data = [list(emb) + [ct] for emb, ct in zip(ref_embed_adata.X, colon_adata.obs["disease"])]
+    # Randomly select 10 indices
+    num_samples = min(10, ref_embed_adata.shape[0])
+    random_indices = np.random.choice(ref_embed_adata.shape[0], size=num_samples, replace=False)
+
+    # Sampled data
+    sampled_data = [
+        list(ref_embed_adata.X[idx]) + [colon_adata.obs["disease"].iloc[idx]]
+        for idx in random_indices
+    ]
     columns = [f"Embedding_{i}" for i in range(ref_embed_adata.X.shape[1])] + ["Cell Type"]
-    embeddings_table = wandb.Table(data=data, columns=columns)
-    wandb.log({"Embedding Table": embeddings_table})
+
+    # Create a smaller WandB table
+    sampled_table = wandb.Table(data=sampled_data, columns=columns)
+    wandb.log({"Embedding Table (Sampled 10 Rows)": sampled_table})
 
     return ref_embed_adata
 
@@ -140,7 +150,7 @@ def main_flow(dataset_path: str, model_path: str, batch_size: int = 128, train: 
     except wandb.errors.UsageError as e:
         print(f"wandb.init failed: {e}")
     if train:
-        ref_embed_adata = train_task(dataset_path, model_path, batch_size).result()
+        ref_embed_adata = train_task(dataset_path, model_path, batch_size)
     if plot:
         plot_task(ref_embed_adata)
 
@@ -152,11 +162,11 @@ def main_flow(dataset_path: str, model_path: str, batch_size: int = 128, train: 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run scGPT training and UMAP visualization as a Prefect Flow.")
-    parser.add_argument("--dataset_path", type=str, default="data/colon_adata.h5ad", help="Path to the dataset.")
-    parser.add_argument("--model_path", type=str, default="models/human_model.pt", help="Path to the scGPT model.")
+    parser.add_argument("--dataset_path", type=str, default="data/base_dataset.h5ad", help="Path to the dataset.")
+    parser.add_argument("--model_path", type=str, default="models/best_model", help="Path to the scGPT model.")
     parser.add_argument("--batch_size", type=int, default=128, help="Batch size for embedding.")
-    parser.add_argument("--train", action="store_true", help="Whether to train the model.")
-    parser.add_argument("--plot", action="store_true", help="Whether to plot UMAP.")
+    parser.add_argument("--train", default = True, help="Whether to train the model.")
+    parser.add_argument("--plot", default = True, help="Whether to plot UMAP.")
     args = parser.parse_args()
 
     # Call the flow

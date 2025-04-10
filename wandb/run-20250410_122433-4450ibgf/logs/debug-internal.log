@@ -1,0 +1,15 @@
+{"time":"2025-04-10T12:24:33.332849394Z","level":"INFO","msg":"stream: starting","core version":"0.19.9","symlink path":"/workspace/scGPT-niche-repo/wandb/run-20250410_122433-4450ibgf/logs/debug-core.log"}
+{"time":"2025-04-10T12:24:33.825314442Z","level":"INFO","msg":"created new stream","id":"4450ibgf"}
+{"time":"2025-04-10T12:24:33.825642332Z","level":"INFO","msg":"stream: started","id":"4450ibgf"}
+{"time":"2025-04-10T12:24:33.825657083Z","level":"INFO","msg":"writer: Do: started","stream_id":"4450ibgf"}
+{"time":"2025-04-10T12:24:33.825699854Z","level":"INFO","msg":"handler: started","stream_id":"4450ibgf"}
+{"time":"2025-04-10T12:24:33.825694734Z","level":"INFO","msg":"sender: started","stream_id":"4450ibgf"}
+{"time":"2025-04-10T12:24:34.089192661Z","level":"INFO","msg":"Starting system monitor"}
+{"time":"2025-04-10T12:34:42.04558839Z","level":"INFO","msg":"stream: closing","id":"4450ibgf"}
+{"time":"2025-04-10T12:34:42.045637602Z","level":"INFO","msg":"Stopping system monitor"}
+{"time":"2025-04-10T12:34:42.047789882Z","level":"INFO","msg":"Stopped system monitor"}
+{"time":"2025-04-10T12:34:44.57656083Z","level":"INFO","msg":"fileTransfer: Close: file transfer manager closed"}
+{"time":"2025-04-10T12:34:44.89961941Z","level":"INFO","msg":"handler: closed","stream_id":"4450ibgf"}
+{"time":"2025-04-10T12:34:44.899715893Z","level":"INFO","msg":"writer: Close: closed","stream_id":"4450ibgf"}
+{"time":"2025-04-10T12:34:44.899728513Z","level":"INFO","msg":"sender: closed","stream_id":"4450ibgf"}
+{"time":"2025-04-10T12:34:44.913346001Z","level":"INFO","msg":"stream: closed","id":"4450ibgf"}
