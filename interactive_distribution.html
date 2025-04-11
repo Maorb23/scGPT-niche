@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Bokeh Plot</title>
+    <style>
+      html, body {
+        box-sizing: border-box;
+        display: flow-root;
+        height: 100%;
+        margin: 0;
+        padding: 0;
+      }
+    </style>
+    <script type="text/javascript" src="https://cdn.bokeh.org/bokeh/release/bokeh-3.7.2.min.js"></script>
+    <script type="text/javascript" src="https://cdn.bokeh.org/bokeh/release/bokeh-widgets-3.7.2.min.js"></script>
+    <script type="text/javascript">
+        Bokeh.set_log_level("info");
+    </script>
+  </head>
+  <body>
+    <div id="fcea2164-208e-4a53-a57a-8db92b6f5e58" data-root-id="p1048" style="display: contents;"></div>
+  
+    <script type="application/json" id="aaa352ad-d2ef-4c28-afe0-538cb54b9b36">
+      {"03c6a037-aa44-409a-8d9f-d26533e2ec73":{"version":"3.7.2","title":"Bokeh Application","roots":[{"type":"object","name":"Column","id":"p1048","attributes":{"children":[{"type":"object","name":"Dropdown","id":"p1046","attributes":{"button_type":"warning","js_event_callbacks":{"type":"map","entries":[["menu_item_click",[{"type":"object","name":"CustomJS","id":"p1047","attributes":{"args":{"type":"map","entries":[["source",{"type":"object","name":"ColumnDataSource","id":"p1001","attributes":{"selected":{"type":"object","name":"Selection","id":"p1002","attributes":{"indices":[],"line_indices":[]}},"selection_policy":{"type":"object","name":"UnionRenderers","id":"p1003"},"data":{"type":"map","entries":[["x",["Enterocytes CA1 CA2 CA4-","Enterocytes TMIGD1 MEP1A","Goblet cells MUC2 TFF1-","Epithelial Cycling cells","Stem cells OLFM4 LGR5","Stem cells OLFM4","Stem cells OLFM4 PCNA","Enterocytes BEST4","Goblet cells MUC2 TFF1","Goblet cells SPINK4","Tuft cells","Enteroendocrine cells","Paneth cells"]],["y",[32783,17997,11681,8187,7201,6440,4858,2618,2522,1447,1194,549,311]]]}}}],["source_donor",{"type":"object","name":"ColumnDataSource","id":"p1004","attributes":{"selected":{"type":"object","name":"Selection","id":"p1005","attributes":{"indices":[],"line_indices":[]}},"selection_policy":{"type":"object","name":"UnionRenderers","id":"p1006"},"data":{"type":"map","entries":[["x",["114902","197396","175041","130084","N10","N15","110204","180844","N11","178961","128624","N21","104689","N51","N18","N46","N17","N16","104152","128400","1108147","124246","N20","154787","164969","N13","121881","128208","139073","N8","106265","107306","117351","105446"]],["y",[10929,9098,8103,7786,4547,4363,4363,4061,3672,3241,3087,2991,2945,2417,2364,2143,2038,1984,1940,1812,1751,1683,1515,1376,1316,1216,857,838,751,723,681,573,486,138]]]}}}],["source_sex",{"type":"object","name":"ColumnDataSource","id":"p1007","attributes":{"selected":{"type":"object","name":"Selection","id":"p1008","attributes":{"indices":[],"line_indices":[]}},"selection_policy":{"type":"object","name":"UnionRenderers","id":"p1009"},"data":{"type":"map","entries":[["x",["male","female"]],["y",[65116,32672]]]}}}],["source_layer",{"type":"object","name":"ColumnDataSource","id":"p1010","attributes":{"selected":{"type":"object","name":"Selection","id":"p1011","attributes":{"indices":[],"line_indices":[]}},"selection_policy":{"type":"object","name":"UnionRenderers","id":"p1012"},"data":{"type":"map","entries":[["x",["E","N","L"]],["y",[47081,38508,12199]]]}}}],["bars",{"type":"object","name":"GlyphRenderer","id":"p1043","attributes":{"data_source":{"id":"p1001"},"view":{"type":"object","name":"CDSView","id":"p1044","attributes":{"filter":{"type":"object","name":"AllIndices","id":"p1045"}}},"glyph":{"type":"object","name":"VBar","id":"p1040","attributes":{"x":{"type":"field","field":"x"},"width":{"type":"value","value":0.8},"top":{"type":"field","field":"y"},"line_color":{"type":"value","value":"#1f77b4"},"fill_color":{"type":"value","value":"#1f77b4"}}},"nonselection_glyph":{"type":"object","name":"VBar","id":"p1041","attributes":{"x":{"type":"field","field":"x"},"width":{"type":"value","value":0.8},"top":{"type":"field","field":"y"},"line_color":{"type":"value","value":"#1f77b4"},"line_alpha":{"type":"value","value":0.1},"fill_color":{"type":"value","value":"#1f77b4"},"fill_alpha":{"type":"value","value":0.1},"hatch_alpha":{"type":"value","value":0.1}}},"muted_glyph":{"type":"object","name":"VBar","id":"p1042","attributes":{"x":{"type":"field","field":"x"},"width":{"type":"value","value":0.8},"top":{"type":"field","field":"y"},"line_color":{"type":"value","value":"#1f77b4"},"line_alpha":{"type":"value","value":0.2},"fill_color":{"type":"value","value":"#1f77b4"},"fill_alpha":{"type":"value","value":0.2},"hatch_alpha":{"type":"value","value":0.2}}}}}],["plot",{"type":"object","name":"Figure","id":"p1013","attributes":{"width":800,"height":400,"x_range":{"type":"object","name":"FactorRange","id":"p1023","attributes":{"factors":["Enterocytes CA1 CA2 CA4-","Enterocytes TMIGD1 MEP1A","Goblet cells MUC2 TFF1-","Epithelial Cycling cells","Stem cells OLFM4 LGR5","Stem cells OLFM4","Stem cells OLFM4 PCNA","Enterocytes BEST4","Goblet cells MUC2 TFF1","Goblet cells SPINK4","Tuft cells","Enteroendocrine cells","Paneth cells"]}},"y_range":{"type":"object","name":"DataRange1d","id":"p1015"},"x_scale":{"type":"object","name":"CategoricalScale","id":"p1024"},"y_scale":{"type":"object","name":"LinearScale","id":"p1025"},"title":{"type":"object","name":"Title","id":"p1016","attributes":{"text":"Cell Count per Cell Type"}},"renderers":[{"id":"p1043"}],"toolbar":{"type":"object","name":"Toolbar","id":"p1022","attributes":{"tools":[{"type":"object","name":"HoverTool","id":"p1036","attributes":{"renderers":"auto","tooltips":[["Label","@x"],["Count","@y"]]}}]}},"toolbar_location":null,"left":[{"type":"object","name":"LinearAxis","id":"p1031","attributes":{"ticker":{"type":"object","name":"BasicTicker","id":"p1032","attributes":{"mantissas":[1,2,5]}},"formatter":{"type":"object","name":"BasicTickFormatter","id":"p1033"},"major_label_policy":{"type":"object","name":"AllLabels","id":"p1034"},"major_label_text_font_size":"10pt"}}],"below":[{"type":"object","name":"CategoricalAxis","id":"p1026","attributes":{"ticker":{"type":"object","name":"CategoricalTicker","id":"p1027"},"formatter":{"type":"object","name":"CategoricalTickFormatter","id":"p1028"},"major_label_orientation":1.2,"major_label_policy":{"type":"object","name":"AllLabels","id":"p1029"},"major_label_text_font_size":"8pt"}}],"center":[{"type":"object","name":"Grid","id":"p1030","attributes":{"axis":{"id":"p1026"}}},{"type":"object","name":"Grid","id":"p1035","attributes":{"dimension":1,"axis":{"id":"p1031"}}}]}}]]},"code":"\n            const selected = cb_obj.item;\n            let new_source;\n            if (selected === \"celltype\") {\n                new_source = source;\n                plot.title.text = \"Cell Count per Cell Type\";\n            } else if (selected === \"donor\") {\n                new_source = source_donor;\n                plot.title.text = \"Cell Count per Donor\";\n            } else if (selected === \"sex\") {\n                new_source = source_sex;\n                plot.title.text = \"Cell Distribution by Sex\";\n            } else if (selected === \"layer\") {\n                new_source = source_layer;\n                plot.title.text = \"Cell Distribution by Layer\";\n            }\n            bars.data_source.data = new_source.data;\n            plot.x_range.factors = new_source.data['x'];\n            bars.data_source.change.emit();\n            plot.change.emit();\n        "}}]]]},"label":"Select Plot","menu":[["Cell Type","celltype"],["Donor","donor"],["Sex","sex"],["Layer","layer"]]}},{"id":"p1013"}]}}]}}
+    </script>
+    <script type="text/javascript">
+      (function() {
+        const fn = function() {
+          Bokeh.safely(function() {
+            (function(root) {
+              function embed_document(root) {
+              const docs_json = document.getElementById('aaa352ad-d2ef-4c28-afe0-538cb54b9b36').textContent;
+              const render_items = [{"docid":"03c6a037-aa44-409a-8d9f-d26533e2ec73","roots":{"p1048":"fcea2164-208e-4a53-a57a-8db92b6f5e58"},"root_ids":["p1048"]}];
+              root.Bokeh.embed.embed_items(docs_json, render_items);
+              }
+              if (root.Bokeh !== undefined) {
+                embed_document(root);
+              } else {
+                let attempts = 0;
+                const timer = setInterval(function(root) {
+                  if (root.Bokeh !== undefined) {
+                    clearInterval(timer);
+                    embed_document(root);
+                  } else {
+                    attempts++;
+                    if (attempts > 100) {
+                      clearInterval(timer);
+                      console.log("Bokeh: ERROR: Unable to run BokehJS code because BokehJS library is missing");
+                    }
+                  }
+                }, 10, root)
+              }
+            })(window);
+          });
+        };
+        if (document.readyState != "loading") fn();
+        else document.addEventListener("DOMContentLoaded", fn);
+      })();
+    </script>
+  </body>
+</html>

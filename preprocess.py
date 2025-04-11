@@ -15,6 +15,11 @@ class Preprocess:
         self.dataset_path = dataset_path
         self.describe = describe
 
+    def normalize_data(self, data):
+        """Normalize the data using log normalization."""
+        data = np.log1p(data)
+        return data
+
     def preprocess_data(self):
         """Preprocess the data by embedding it using scGPT."""
         logger.info("Loading dataset...")
@@ -28,6 +33,10 @@ class Preprocess:
         logger.warning(f"Obs Columns in colon dataset: {colon_adata.obs.columns.tolist()}")
         logger.warning(f"Var Columns in colon dataset: {colon_adata.var.columns.tolist()}")
         logger.warning(f"X shape in colon dataset: {colon_adata.X.shape}")
+        logger.warning(f" Cell Types in the data: \n {colon_adata.obs.cell_type.value_counts()}")
+        logger.warning(f"Value counts of layers: \n {colon_adata.obs.Layer.value_counts()}")
+        logger.warning(f"Age group: \n {colon_adata.obs['age group'].value_counts()}")
+        logger.warning(f"Sex: \n {colon_adata.obs['sex'].value_counts()}")
 
         logger.info("Full describe...")
         full_describe = colon_adata.obs.describe(include = 'all')
@@ -47,9 +56,6 @@ class Preprocess:
         if not os.path.exists("ydata/data/processed"):
             os.makedirs("ydata/data/processed")
         colon_adata.write_h5ad("ydata/data/processed/colon_adata.h5ad")
-        print(full_describe)
-        print(N_genes)
-
         return  colon_adata, full_describe, N_genes
 
 if __name__ == "__main__":

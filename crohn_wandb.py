@@ -17,6 +17,7 @@ from train import scGPT_niche
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 import logging
+from plots import Plots
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -54,7 +55,7 @@ def preprocess_task(dataset_path: str, describe: bool = True):
         plt.tight_layout()
 
         # Log the plot to WandB
-        wandb.log({"Sex Distribution Plot": wandb.Image(plt.gcf())})
+        wandb.log({"Sex Distribution Plot": wandb.Image(plt.gcf())}) # Load the plot to WandB
         plt.close()        
         N_genes_clean = N_genes.fillna("N/A")
         #full_table = wandb.Table(dataframe=full_describe_clean)
@@ -63,6 +64,18 @@ def preprocess_task(dataset_path: str, describe: bool = True):
         genes_table = wandb.Table(dataframe=N_genes_clean)
         wandb.log({"Genes Count": genes_table})
     return colon_adata
+
+@task 
+def EDA_plots(colon_adata, dataset_path):
+    logger = prefect.get_run_logger()
+    plots = Plots(dataset_path)
+    logger.info("Plotting and logging cell distribution by sex...")
+    fig1 = plots.plot_most_expressed_genes(colon_adata, n_genes=20)
+    wandb.log({"Most Expressed Genes": wandb.Image(fig1)})
+    fig2 = plots.plot_combined_distributions(colon_adata, save_html=True)
+    # Now load the saved HTML file for wandb
+    wandb.log({"Combined Distributions": wandb.Html(open("interactive_distribution.html"))})
+    return fig1,  fig2
     
 
 
@@ -192,7 +205,7 @@ def custom_plot_umap(positive_class, negative_class, cell_types, emb, desc):
 
 @flow(name="scGPT Training and UMAP Flow")
 def main_flow(dataset_path: str, colon_path, model_path: str, batch_size: int = 128, train: bool = True, plot: bool = True,
-              preprocess: bool = True, custom_plot: bool = True):
+              preprocess: bool = True, custom_plot: bool = True, eda_plots: bool = True):
     """Flow to train the model and plot UMAP."""
     try:
         wandb.init(
@@ -210,6 +223,9 @@ def main_flow(dataset_path: str, colon_path, model_path: str, batch_size: int = 
         print(f"wandb.init failed: {e}")
     if preprocess:
         colon_adata = preprocess_task(dataset_path)
+    
+    if eda_plots:
+        EDA_plots(colon_adata, dataset_path)
     if train:
         ref_embed_adata = train_task(colon_path, model_path, batch_size)
     if plot:
@@ -237,6 +253,7 @@ if __name__ == "__main__":
     parser.add_argument("--plot", default = True, help="Whether to plot UMAP.")
     parser.add_argument("--preprocess", default = True, help="Whether to preprocess the data.")
     parser.add_argument("--custom_plot", default = True, help="Whether to create a custom UMAP plot.")
+    parser.add_argument("--eda_plots", default = True, help="Whether to create EDA plots.")
     args = parser.parse_args()
 
     # Call the flow
@@ -248,6 +265,7 @@ if __name__ == "__main__":
         train=args.train,
         plot=args.plot,
         preprocess=args.preprocess,
-        custom_plot=args.custom_plot
+        custom_plot=args.custom_plot,
+        eda_plots=args.eda_plots
     )
 
