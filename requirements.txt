@@ -14,6 +14,7 @@ seaborn>=0.12.2
 tqdm>=4.65.0
 ipython>=8.0.0
 
+
 # SCGPT
 scgpt>=0.2.4
 

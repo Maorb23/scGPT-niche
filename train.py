@@ -141,6 +141,8 @@ class scGPT_niche:
     def fine_tune(self, ref_embed_adata, epochs=10, optimizer_type="adam"):
         train_losses = []
         test_loss_list = []
+        emb = ref_embed_adata.X  # shape (n_cells, n_genes)
+        linear_probe = nn.Linear(emb.shape[1], 2)
         if optimizer_type.lower() == "adam":
             optimizer = optim.Adam(linear_probe.parameters(), lr=1e-3, weight_decay=1e-4)
         elif optimizer_type.lower() == "sgd":
@@ -174,9 +176,6 @@ class scGPT_niche:
         train_loader = DataLoader(train_dataset, batch_size=self.batch_size, shuffle=True)
         test_loader = DataLoader(test_dataset, batch_size=self.batch_size, shuffle=False)
 
-        # Define linear probe
-        linear_probe = nn.Linear(emb.shape[1], 2)
-
         # Loss and optimizer
         criterion = nn.CrossEntropyLoss()
         optimizer = optim.Adam(linear_probe.parameters(), lr=1e-3, weight_decay=1e-4)
@@ -206,8 +205,9 @@ class scGPT_niche:
 
                 epoch_loss += loss.item()
                 train_losses.append(epoch_loss)
-                logger.warning(f"Epoch {epoch+1}/{epochs}, Loss: {epoch_loss/len(train_loader):.4f}")
-
+                
+            epoch_loss /= len(train_loader)
+            logger.warning(f"Epoch {epoch+1}/{epochs}, Mean Train Loss: {epoch_loss:.4f}")
         all_preds = np.concatenate(all_preds)
         all_targets = np.concatenate(all_targets)
 
@@ -222,30 +222,33 @@ class scGPT_niche:
         linear_probe.eval()
         all_preds = []
         all_targets = []
+        epoch_test_loss = 0
         with torch.no_grad():
             for batch_X, batch_y in test_loader:
                 batch_X, batch_y = batch_X.to(device), batch_y.to(device)
                 logits = linear_probe(batch_X)
                 preds = torch.argmax(logits, dim=1)
                 test_loss = criterion(logits, batch_y)
+                epoch_test_loss += test_loss
                 all_preds.append(preds.cpu().numpy())
                 all_targets.append(batch_y.cpu().numpy())
                 test_loss_list.append(test_loss)
-
+            epoch_test_loss /= len(test_loader)
+            logger.warning(f"Epoch {epoch+1}/{epochs}, Mean Test Loss: {epoch_test_loss:.4f}")
         all_preds = np.concatenate(all_preds)
         all_targets = np.concatenate(all_targets)
 
         f1_macro_test = f1_score(all_targets, all_preds, average='macro')
         f1_micro_test = f1_score(all_targets, all_preds, average='micro')
 
-        logger.warning(f"F1 Macro: {f1_macro_test:.4f}")
-        logger.warning(f"F1 Micro: {f1_micro_test:.4f}")
+        logger.warning(f"F1 Macro Test: {f1_macro_test:.4f}")
+        logger.warning(f"F1 Micro Test: {f1_micro_test:.4f}")
         logger.warning("Evaluation done.")
         return linear_probe, train_losses, test_loss_list, f1_macro_train, f1_micro_train, f1_macro_test, f1_micro_test
     
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Train scGPT model.")
-    parser.add_argument("--colon_data_path", default="ydata/data/processed/colon_adata.h5ad", help="Path to the colon data.")
+    parser.add_argument("--colon_data_path", default="ydata/data/processed/base_dataset_colon.h5ad", help="Path to the colon data.")
     parser.add_argument("--model_path", default="ydata/models/best_model", help="Path to the scGPT model.")
     parser.add_argument("--batch_size", type=int, default=32, help="Batch size for training.")
     parser.add_argument("--fine_tune", default= False, action="store_true", help="Fine-tune the model.")

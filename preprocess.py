@@ -56,7 +56,12 @@ class Preprocess:
         #Save the processed data after creating data/processed folder
         if not os.path.exists("ydata/data/processed"):
             os.makedirs("ydata/data/processed")
-        colon_adata.write_h5ad("ydata/data/processed/colon_adata.h5ad")
+        # Save to processed directory with the same filename
+        save_path = Path("ydata/data/processed") / Path(self.dataset_path).stem
+        save_path = str(save_path) + "_colon.h5ad"
+        colon_adata.write_h5ad(save_path)
+        logger.warning(f"Processed data saved to {save_path}")
+
         return  colon_adata, full_describe, N_genes
 
 if __name__ == "__main__":
