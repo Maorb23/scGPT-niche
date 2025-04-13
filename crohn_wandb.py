@@ -253,9 +253,9 @@ def main_flow(dataset_path: str, colon_path, model_path: str, batch_size: int = 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run scGPT training and UMAP visualization as a Prefect Flow.")
     parser.add_argument("--dataset_path", type=str, default="ydata/data/base_dataset.h5ad", help="Path to the dataset.")
-    parser.add_argument("--colon_path", type=str, default="ydata/data/processed/colon_adata.h5ad", help="Path to the colon data.")
+    parser.add_argument("--colon_path", type=str, default="ydata/data/processed/base_dataset_colon.h5ad", help="Path to the colon data.")
     parser.add_argument("--model_path", type=str, default="ydata/models/best_model", help="Path to the scGPT model.")
-    parser.add_argument("--batch_size", type=int, default=128, help="Batch size for embedding.")
+    parser.add_argument("--batch_size", type=int, default=32,  help="Batch size for embedding.")
     parser.add_argument("--train", action="store_true", help="Whether to train the model.")
     parser.add_argument("--plot", action="store_true", help="Whether to plot UMAP.")
     parser.add_argument("--preprocess", action="store_true", help="Whether to preprocess the data.")

@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 import torch
+from sklearn.model_selection import train_test_split
 import numpy as np
 import argparse
 import os
@@ -138,11 +139,17 @@ class scGPT_niche:
         logger.warning(f"Shape of embedded data: {ref_embed_adata_niche.shape}")
 
     
-    def fine_tune(self, ref_embed_adata, epochs=10, optimizer_type="adam"):
+    def fine_tune(self, ref_embed_adata, epochs=25, optimizer_type="adam"):
         train_losses = []
         test_loss_list = []
         emb = ref_embed_adata.X  # shape (n_cells, n_genes)
-        linear_probe = nn.Linear(emb.shape[1], 2)
+        # Instead of nn.Linear(512, 2)
+        linear_probe = nn.Sequential(
+        nn.Linear(512, 128),
+        nn.ReLU(),
+        nn.Linear(128, 2)
+        )
+
         if optimizer_type.lower() == "adam":
             optimizer = optim.Adam(linear_probe.parameters(), lr=1e-3, weight_decay=1e-4)
         elif optimizer_type.lower() == "sgd":
@@ -160,9 +167,14 @@ class scGPT_niche:
         logger.warning(f"Embedding shape: {emb.shape}")
         logger.warning(f"Labels distribution: {np.bincount(labels)}")
 
-        # Convert to torch tensors
+        # 1. Create the X and y tensors
         X_tensor = torch.tensor(emb, dtype=torch.float32)
         y_tensor = torch.tensor(labels, dtype=torch.long)
+
+        # 2. Shuffle
+        perm = torch.randperm(X_tensor.size(0))
+        X_tensor = X_tensor[perm]
+        y_tensor = y_tensor[perm]
 
         # Create dataset
         dataset = TensorDataset(X_tensor, y_tensor)
@@ -171,8 +183,18 @@ class scGPT_niche:
         n_total = len(dataset)
         n_train = int(0.8 * n_total)
         n_test = n_total - n_train
-        train_dataset, test_dataset = random_split(dataset, [n_train, n_test], generator=torch.Generator().manual_seed(42))
+        X_train, X_test, y_train, y_test = train_test_split(
+        X_tensor.numpy(), y_tensor.numpy(),  # Convert to numpy for sklearn
+        test_size=0.2,
+        random_state=42,
+        stratify=y_tensor.numpy()
+        )
 
+        # 3. Wrap back into TensorDatasets
+        train_dataset = TensorDataset(torch.tensor(X_train), torch.tensor(y_train))
+        test_dataset = TensorDataset(torch.tensor(X_test), torch.tensor(y_test))
+
+        # 4. Create DataLoaders
         train_loader = DataLoader(train_dataset, batch_size=self.batch_size, shuffle=True)
         test_loader = DataLoader(test_dataset, batch_size=self.batch_size, shuffle=False)
 
