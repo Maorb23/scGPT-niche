@@ -204,8 +204,8 @@ def custom_plot_umap(positive_class, negative_class, cell_types, emb, desc):
 # -------------------------------------------------------
 
 @flow(name="scGPT Training and UMAP Flow")
-def main_flow(dataset_path: str, colon_path, model_path: str, batch_size: int = 128, train: bool = True, plot: bool = True,
-              preprocess: bool = True, custom_plot: bool = True, eda_plots: bool = True):
+def main_flow(dataset_path: str, colon_path, model_path: str, batch_size: int = 128, train: bool = False, plot: bool = False,
+              preprocess: bool = False, custom_plot: bool = False, eda_plots: bool = False):
     """Flow to train the model and plot UMAP."""
     try:
         wandb.init(

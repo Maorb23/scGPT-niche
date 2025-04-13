@@ -37,6 +37,7 @@ class Preprocess:
         logger.warning(f"Value counts of layers: \n {colon_adata.obs.Layer.value_counts()}")
         logger.warning(f"Age group: \n {colon_adata.obs['age group'].value_counts()}")
         logger.warning(f"Sex: \n {colon_adata.obs['sex'].value_counts()}")
+        logger.warning(f"Labels in the data: \n, {colon_adata.obs.disease.value_counts()}")
 
         logger.info("Full describe...")
         full_describe = colon_adata.obs.describe(include = 'all')
