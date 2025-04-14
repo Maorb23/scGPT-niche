@@ -36,7 +36,7 @@ class scGPT_niche:
         ref_embed_adata = scg.tasks.embed_data(
             colon_adata,
             model_dir=Path(self.model_path),
-            gene_col='feature_name',
+            gene_col=None,
             obs_to_save=list(colon_adata.obs.columns),
             batch_size=self.batch_size,
             return_new_adata=True,
