@@ -12,7 +12,7 @@ import scgpt as scg
 from torch import nn   
 import torch.optim as optim
 import umap
-from sklearn.metrics import f1_score
+from sklearn.metrics import f1_score, classification_report
 from torch.utils.data import DataLoader, TensorDataset, random_split
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
@@ -45,11 +45,6 @@ class scGPT_niche:
 
         # Apply the mask and copy
         colon_adata = colon_adata[:, final_good_genes_mask].copy()
-
-        # Filter cells
-        non_empty_cells = (colon_adata.X.sum(axis=1)) > 0
-        colon_adata = colon_adata[non_empty_cells].copy()
-        colon_adata = colon_adata[(colon_adata.X > 0).sum(axis=1) > 0].copy()
 
 
         logger.warning("Loaded colon dataset...")
@@ -251,8 +246,8 @@ class scGPT_niche:
 
         # Training loop
         linear_probe.train()
-        all_preds = []
-        all_targets = []
+        all_preds_train = []
+        all_targets_train = []
         for epoch in range(epochs):
             epoch_loss = 0
             for batch_X, batch_y in train_loader:
@@ -261,8 +256,8 @@ class scGPT_niche:
                 optimizer.zero_grad()
                 logits = linear_probe(batch_X)
                 preds = torch.argmax(logits, dim=1)
-                all_targets.append(batch_y.cpu().numpy())
-                all_preds.append(preds.cpu().numpy())
+                all_targets_train.append(batch_y.cpu().numpy())
+                all_preds_train.append(preds.cpu().numpy())
                 loss = criterion(logits, batch_y)
                 loss.backward()
                 optimizer.step()
@@ -276,8 +271,8 @@ class scGPT_niche:
 
             # Evaluation
             linear_probe.eval()
-            all_preds = []
-            all_targets = []
+            all_preds_test = []
+            all_targets_test = []
             epoch_test_loss = 0
             with torch.no_grad():
                 for batch_X, batch_y in test_loader:
@@ -286,29 +281,32 @@ class scGPT_niche:
                     preds = torch.argmax(logits, dim=1)
                     test_loss = criterion(logits, batch_y)
                     epoch_test_loss += test_loss
-                    all_preds.append(preds.cpu().numpy())
-                    all_targets.append(batch_y.cpu().numpy())
+                    all_preds_test.append(preds.cpu().numpy())
+                    all_targets_test.append(batch_y.cpu().numpy())
                     test_loss_list.append(test_loss)
                 epoch_test_loss /= len(test_loader)
                 logger.warning(f"Epoch {epoch+1}/{epochs}, Mean Test Loss: {epoch_test_loss:.4f}")
-        all_preds = np.concatenate(all_preds)
-        all_targets = np.concatenate(all_targets)
+        all_preds_train = np.concatenate(all_preds_train)
+        all_targets_train = np.concatenate(all_targets_train)
+        all_preds_test = np.concatenate(all_preds_test)
+        all_targets_test = np.concatenate(all_targets_test)
 
-        all_preds = np.concatenate(all_preds)
-        all_targets = np.concatenate(all_targets)
-
-        f1_macro_train = f1_score(all_targets, all_preds, average='macro')
-        f1_micro_train = f1_score(all_targets, all_preds, average='micro')  
+        f1_macro_train = f1_score(all_targets_train, all_preds_train, average='macro')
+        f1_micro_train = f1_score(all_targets_train, all_preds_train, average='micro')  
 
         logger.warning(f"F1 macro train score: {f1_macro_train}, F1 micro train score: {f1_micro_train}")
 
         logger.warning("Training done. Evaluating...")
 
-        f1_macro_test = f1_score(all_targets, all_preds, average='macro')
-        f1_micro_test = f1_score(all_targets, all_preds, average='micro')
+        f1_macro_test = f1_score(all_targets_test, all_preds_test, average='macro')
+        f1_micro_test = f1_score(all_targets_test, all_preds_test, average='micro')
 
         logger.warning(f"F1 Macro Test: {f1_macro_test:.4f}")
         logger.warning(f"F1 Micro Test: {f1_micro_test:.4f}")
+        print("Classification report Train:")
+        print(classification_report(all_targets_train, all_preds_train))
+        print("Classification report Test:")
+        print(classification_report(all_targets_test, all_preds_test))
         logger.warning("Evaluation done.")
         return linear_probe, train_losses, test_loss_list, f1_macro_train, f1_micro_train, f1_macro_test, f1_micro_test
     
