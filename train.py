@@ -230,6 +230,28 @@ class scGPT_niche:
                 
             epoch_loss /= len(train_loader)
             logger.warning(f"Epoch {epoch+1}/{epochs}, Mean Train Loss: {epoch_loss:.4f}")
+        
+
+            # Evaluation
+            linear_probe.eval()
+            all_preds = []
+            all_targets = []
+            epoch_test_loss = 0
+            with torch.no_grad():
+                for batch_X, batch_y in test_loader:
+                    batch_X, batch_y = batch_X.to(device), batch_y.to(device)
+                    logits = linear_probe(batch_X)
+                    preds = torch.argmax(logits, dim=1)
+                    test_loss = criterion(logits, batch_y)
+                    epoch_test_loss += test_loss
+                    all_preds.append(preds.cpu().numpy())
+                    all_targets.append(batch_y.cpu().numpy())
+                    test_loss_list.append(test_loss)
+                epoch_test_loss /= len(test_loader)
+                logger.warning(f"Epoch {epoch+1}/{epochs}, Mean Test Loss: {epoch_test_loss:.4f}")
+        all_preds = np.concatenate(all_preds)
+        all_targets = np.concatenate(all_targets)
+
         all_preds = np.concatenate(all_preds)
         all_targets = np.concatenate(all_targets)
 
@@ -239,26 +261,6 @@ class scGPT_niche:
         logger.warning(f"F1 macro train score: {f1_macro_train}, F1 micro train score: {f1_micro_train}")
 
         logger.warning("Training done. Evaluating...")
-
-        # Evaluation
-        linear_probe.eval()
-        all_preds = []
-        all_targets = []
-        epoch_test_loss = 0
-        with torch.no_grad():
-            for batch_X, batch_y in test_loader:
-                batch_X, batch_y = batch_X.to(device), batch_y.to(device)
-                logits = linear_probe(batch_X)
-                preds = torch.argmax(logits, dim=1)
-                test_loss = criterion(logits, batch_y)
-                epoch_test_loss += test_loss
-                all_preds.append(preds.cpu().numpy())
-                all_targets.append(batch_y.cpu().numpy())
-                test_loss_list.append(test_loss)
-            epoch_test_loss /= len(test_loader)
-            logger.warning(f"Epoch {epoch+1}/{epochs}, Mean Test Loss: {epoch_test_loss:.4f}")
-        all_preds = np.concatenate(all_preds)
-        all_targets = np.concatenate(all_targets)
 
         f1_macro_test = f1_score(all_targets, all_preds, average='macro')
         f1_micro_test = f1_score(all_targets, all_preds, average='micro')
