@@ -12,7 +12,7 @@ import scgpt as scg
 from torch import nn   
 import torch.optim as optim
 import umap
-from sklearn.metrics import f1_score
+from sklearn.metrics import f1_score, classification_report
 from torch.utils.data import DataLoader, TensorDataset, random_split
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
@@ -266,6 +266,10 @@ class scGPT_niche:
         logger.warning(f"F1 Macro Test: {f1_macro_test:.4f}")
         logger.warning(f"F1 Micro Test: {f1_micro_test:.4f}")
         logger.warning("Evaluation done.")
+        print("Train Classification Report:")
+        print(classification_report(all_targets_train, all_preds_train,digits=4))
+        print("Test Classification Report:")
+        print(classification_report(all_targets_test, all_preds_test,digits=4))
         return linear_probe, train_losses, test_loss_list, f1_macro_train, f1_micro_train, f1_macro_test, f1_micro_test
     
 if __name__ == "__main__":
