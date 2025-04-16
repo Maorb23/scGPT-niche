@@ -74,7 +74,7 @@ def train_task(colon_path: str, model_path: str, batch_size: int,fine_tune):
     num_samples = min(10, ref_embed_adata.shape[0])
     random_indices = np.random.choice(ref_embed_adata.shape[0], size=num_samples, replace=False)
     sampled_data = [
-        list(ref_embed_adata.X[idx]) + [colon_adata.obs["disease"].iloc[idx]]
+        list(ref_embed_adata.X[idx]) + [colon_adata.obs["region"].iloc[idx]]
         for idx in random_indices
     ]
     columns = [f"Embedding_{i}" for i in range(ref_embed_adata.X.shape[1])] + ["Cell Type"]
@@ -104,7 +104,7 @@ def plot_task(ref_embed_adata):
     # Log UMAP coordinates
     umap_data = [
         [float(coord[0]), float(coord[1]), cell_type]
-        for coord, cell_type in zip(ref_embed_adata.obsm['X_umap'], ref_embed_adata.obs['disease'])
+        for coord, cell_type in zip(ref_embed_adata.obsm['X_umap'], ref_embed_adata.obs['region'])
     ]
     umap_table = wandb.Table(columns=["UMAP1", "UMAP2", "Cell Type"], data=umap_data)
     wandb.log({"UMAP Coordinates Table": umap_table})
@@ -184,8 +184,8 @@ def main_flow(dataset_path: str, colon_path, model_path: str, batch_size: int = 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run scGPT training and UMAP visualization as a Prefect Flow.")
-    parser.add_argument("--dataset_path", type=str, default="ydata/data/base_dataset.h5ad", help="Path to the dataset.")
-    parser.add_argument("--colon_path", type=str, default="ydata/data/processed/base_dataset_colon.h5ad", help="Path to the colon data.")
+    parser.add_argument("--dataset_path", type=str, default="ydata/data/Vizgen-hCRC-1313910_VS39.h5ad", help="Path to the dataset.")
+    parser.add_argument("--colon_path", type=str, default="ydata/data/processed/Vizgen-hCRC-1313910_VS39_colon.h5ad", help="Path to the colon data.")
     parser.add_argument("--model_path", type=str, default="ydata/models/best_model", help="Path to the scGPT model.")
     parser.add_argument("--batch_size", type=int, default=32,  help="Batch size for embedding.")
     parser.add_argument("--train", action="store_true", help="Whether to train the model.")
