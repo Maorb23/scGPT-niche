@@ -49,7 +49,7 @@ class FlashscGPTMHA(nn.Module):
         ), "Only support head_dim <= 128 and divisible by 8"
 
         self.Wqkv = nn.Linear(embed_dim, 3 * embed_dim, bias=bias, **factory_kwargs)
-        self.self_attn = flash_attn_func(attention_dropout=attention_dropout)
+        self.self_attn = flash_attn_func(dropout_p=attention_dropout)
         self.cross_attn = MultiheadAttention(
             embed_dim,
             num_heads,
