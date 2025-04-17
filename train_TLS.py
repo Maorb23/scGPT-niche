@@ -372,10 +372,18 @@ if __name__ == "__main__":
     parser.add_argument("--model_path", default="ydata/models/best_model", help="Path to the scGPT model.")
     parser.add_argument("--batch_size", type=int, default=32, help="Batch size for training.")
     parser.add_argument("--fine_tune", default= False, action="store_true", help="Fine-tune the model.")
+    parser.add_argument("--embed", default=False, action="store_true", help="embed the model.")
+    parser.add_argument("--embed_spatial", default=False, action="store_true", help="embed the model.")
+    parser.add_argument("--embed_niche", default=False, action="store_true", help="embed the model.")
     args = parser.parse_args()
 
     scgpt_niche = scGPT_niche(args.colon_data_path, args.model_path, args.batch_size)
-    ref_embed_adata = scgpt_niche.embed()
+    if args.embed:
+        ref_embed_adata = scgpt_niche.embed()
+    if args.embed_spatial:
+        ref_embed_adata =scgpt_niche.embed_spatial()
+    if args.embed_niche:
+        ref_embed_adata = scgpt_niche.embed_niche()
     if args.fine_tune:
         linear_probe, train_losses, test_loss_list, f1_macro_train, f1_micro_train, f1_macro_test, f1_micro_test = scgpt_niche.fine_tune(ref_embed_adata)
         logger.warning(f"F1 Macro: {f1_macro_test:.4f}")
