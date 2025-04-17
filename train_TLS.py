@@ -184,22 +184,26 @@ class scGPT_niche:
         linear_probe = nn.Sequential(
         nn.Linear(512, 128),
         nn.ReLU(),
-        nn.Linear(128, 3)
+        nn.Linear(128, 2)
         )
 
         if optimizer_type.lower() == "adam":
-            optimizer = optim.Adam(linear_probe.parameters(), lr=1e-3, weight_decay=1e-4)
+            optimizer = optim.Adam(linear_probe.parameters(), lr=1e-4, weight_decay=1e-4)
         elif optimizer_type.lower() == "sgd":
-            optimizer = optim.SGD(linear_probe.parameters(), lr=1e-3, momentum=0.9, weight_decay=1e-4)
+            optimizer = optim.SGD(linear_probe.parameters(), lr=1e-4, momentum=0.9, weight_decay=1e-4)
         else:
             raise ValueError(f"Unsupported optimizer type: {optimizer_type}")
         # Extract embeddings and labels
         emb = ref_embed_adata.X  # shape (n_cells, n_genes)
-        region_labels = ref_embed_adata.obs['region'].values
+        ref_embed_adata.obs["binary_tls"] = ref_embed_adata.obs["region"].apply(lambda x: "TLS" if x == "TLS" else "non-TLS")
+        label_mapping = {"non-TLS": 0, "TLS": 1}
+        labels = np.array([label_mapping[r] for r in ref_embed_adata.obs["binary_tls"]])
+
+        #region_labels = ref_embed_adata.obs['region'].values
 
         # Map labels to integers
-        label_mapping = {"Stroma": 0, "Tumor": 1, "TLS": 2}
-        labels = np.array([label_mapping[r] for r in region_labels])
+        #label_mapping = {"Stroma": 0, "Tumor": 1, "TLS": 2}
+        #labels = np.array([label_mapping[r] for r in region_labels])
 
         logger.warning(f"Embedding shape: {emb.shape}")
         logger.warning(f"Labels distribution: {np.bincount(labels)}")
