@@ -17,6 +17,15 @@ from torch.utils.data import DataLoader, TensorDataset, random_split
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 import logging
+import sys
+from pathlib import Path
+
+# Add the parent directory of scGPT_spatial to sys.path
+sys.path.insert(0, str(Path(__file__).resolve().parent / "scGPT-spatial"))
+
+# Import scGPT_spatial and its utilities
+import scgpt_spatial
+from scgpt_spatial.utils import eval_scib_metrics
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
