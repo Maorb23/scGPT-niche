@@ -34,9 +34,11 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 class scGPT_niche:
-    def __init__(self, colon_data_path, model_path, batch_size, fine_tune=False):
+    def __init__(self, colon_data_path, model_path,model_path_spatial,
+     batch_size, fine_tune=False):
         self.colon_data_path = colon_data_path
         self.model_path = model_path
+        self.model_path_spatial = model_path_spatial
         self.batch_size = batch_size
 
     def embed(self):
@@ -144,7 +146,7 @@ class scGPT_niche:
 
         ref_embed_adata_spatial = scgpt_spatial.tasks.embed_data(
         colon_adata,
-        model_dir=Path(self.model_path),
+        model_dir=Path(self.model_path_spatial),
         gene_col= "feature_name",
         obs_to_save=list(colon_adata.obs.columns),
         batch_size=self.batch_size,
@@ -386,7 +388,7 @@ if __name__ == "__main__":
     parser.add_argument("--embed_niche", default=False, action="store_true", help="embed the model.")
     args = parser.parse_args()
 
-    scgpt_niche = scGPT_niche(args.colon_data_path, args.model_path, args.batch_size)
+    scgpt_niche = scGPT_niche(args.colon_data_path, args.model_path, args.model_path_spatial, args.batch_size, args.fine_tune)
     if args.embed:
         ref_embed_adata = scgpt_niche.embed()
     if args.embed_spatial:
