@@ -378,6 +378,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Train scGPT model.")
     parser.add_argument("--colon_data_path", default="ydata/data/processed/Vizgen-hCRC-1313910_VS39_colon.h5ad", help="Path to the colon data.")
     parser.add_argument("--model_path", default="ydata/models/best_model", help="Path to the scGPT model.")
+    parser.add_argument("--model_path_spatial",  default="ydata/models/best_model_spatial", help="Path to the scGPT_spatial model.")
     parser.add_argument("--batch_size", type=int, default=32, help="Batch size for training.")
     parser.add_argument("--fine_tune", default= False, action="store_true", help="Fine-tune the model.")
     parser.add_argument("--embed", default=False, action="store_true", help="embed the model.")
