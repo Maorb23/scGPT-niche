@@ -238,15 +238,15 @@ class scGPT_niche:
         logger.warning(f"Shape of embedded data: {ref_embed_adata_niche.shape}")
 
     
-    def fine_tune(self, ref_embed_adata, epochs=25, optimizer_type="adam"):
+    def fine_tune(self, ref_embed_adata, epochs=5, optimizer_type="adam"):
         train_losses = []
         test_loss_list = []
         emb = ref_embed_adata.X  # shape (n_cells, n_genes)
         # Instead of nn.Linear(512, 2)
         linear_probe = nn.Sequential(
         nn.Linear(512, 128),
-        nn.ReLU(),
-        nn.Linear(128, 2)
+        #nn.ReLU(),
+        #nn.Linear(128, 3)
         )
 
         if optimizer_type.lower() == "adam":
@@ -257,15 +257,15 @@ class scGPT_niche:
             raise ValueError(f"Unsupported optimizer type: {optimizer_type}")
         # Extract embeddings and labels
         emb = ref_embed_adata.X  # shape (n_cells, n_genes)
-        ref_embed_adata.obs["binary_tls"] = ref_embed_adata.obs["region"].apply(lambda x: "TLS" if x == "TLS" else "non-TLS")
-        label_mapping = {"non-TLS": 0, "TLS": 1}
-        labels = np.array([label_mapping[r] for r in ref_embed_adata.obs["binary_tls"]])
+        #ref_embed_adata.obs["binary_tls"] = ref_embed_adata.obs["region"].apply(lambda x: "TLS" if x == "TLS" else "non-TLS")
+        #label_mapping = {"non-TLS": 0, "TLS": 1}
+        #labels = np.array([label_mapping[r] for r in ref_embed_adata.obs["binary_tls"]])
 
-        #region_labels = ref_embed_adata.obs['region'].values
+        region_labels = ref_embed_adata.obs['region'].values
 
         # Map labels to integers
-        #label_mapping = {"Stroma": 0, "Tumor": 1, "TLS": 2}
-        #labels = np.array([label_mapping[r] for r in region_labels])
+        label_mapping = {"Stroma": 0, "Tumor": 1, "TLS": 2}
+        labels = np.array([label_mapping[r] for r in region_labels])
 
         logger.warning(f"Embedding shape: {emb.shape}")
         logger.warning(f"Labels distribution: {np.bincount(labels)}")

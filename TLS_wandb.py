@@ -63,11 +63,11 @@ def EDA_plots(colon_adata, dataset_path):
 
 
 @task
-def train_task(colon_path: str, model_path: str, batch_size: int,fine_tune):
+def train_task(colon_path: str, model_path: str,model_path_spatial: str,  batch_size: int,fine_tune):
 
-    trainer = scGPT_niche(colon_path, model_path, batch_size,fine_tune)
+    trainer = scGPT_niche(colon_path, model_path, model_path_spatial, batch_size,fine_tune)
     colon_adata = sc.read_h5ad(colon_path)
-    ref_embed_adata = trainer.embed()
+    ref_embed_adata = trainer.embed_spatial()
     if fine_tune:
         linear_probe, train_losses, test_loss_list, f1_macro_train, f1_micro_train, f1_macro_test, f1_micro_test = trainer.fine_tune(ref_embed_adata)
     # Randomly select 10 indices
@@ -140,7 +140,7 @@ def custom_plot_umap(positive_class, negative_class, cell_types, emb, desc):
 # -------------------------------------------------------
 
 @flow(name="scGPT Training and UMAP Flow")
-def main_flow(dataset_path: str, colon_path, model_path: str, batch_size: int = 128, train: bool = False, plot: bool = False,
+def main_flow(dataset_path: str, colon_path, model_path: str,model_path_spatial: str,  batch_size: int = 128, train: bool = False, plot: bool = False,
         preprocess: bool = False, custom_plot: bool = False, eda_plots: bool = False, fine_tune = False):
     """Flow to train the model and plot UMAP."""
     try:
@@ -166,7 +166,7 @@ def main_flow(dataset_path: str, colon_path, model_path: str, batch_size: int = 
         if fine_tune:
             ref_embed_adata, linear_probe, train_losses, test_loss_list, f1_macro_train, f1_micro_train, f1_macro_test, f1_micro_test = train_task(colon_path, model_path, batch_size, fine_tune) 
         else:
-            ref_embed_adata = train_task(colon_path, model_path, batch_size, fine_tune)
+            ref_embed_adata = train_task(colon_path, model_path, model_path_spatial, batch_size, fine_tune)
     if plot:
         plot_task(ref_embed_adata)
     #if custom_plot:
@@ -187,6 +187,7 @@ if __name__ == "__main__":
     parser.add_argument("--dataset_path", type=str, default="ydata/data/Vizgen-hCRC-1313910_VS39.h5ad", help="Path to the dataset.")
     parser.add_argument("--colon_path", type=str, default="ydata/data/processed/Vizgen-hCRC-1313910_VS39_colon.h5ad", help="Path to the colon data.")
     parser.add_argument("--model_path", type=str, default="ydata/models/best_model", help="Path to the scGPT model.")
+    parser.add_argument("--model_path_spatial",  default="ydata/models/best_model_spatial", help="Path to the scGPT_spatial model.")
     parser.add_argument("--batch_size", type=int, default=32,  help="Batch size for embedding.")
     parser.add_argument("--train", action="store_true", help="Whether to train the model.")
     parser.add_argument("--plot", action="store_true", help="Whether to plot UMAP.")
@@ -201,6 +202,7 @@ if __name__ == "__main__":
         dataset_path=args.dataset_path,
         colon_path=args.colon_path,
         model_path=args.model_path,
+        model_path_spatial = args.model_path_spatial,
         batch_size=args.batch_size,
         train=args.train,
         plot=args.plot,
