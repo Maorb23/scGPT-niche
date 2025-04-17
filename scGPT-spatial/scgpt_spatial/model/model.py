@@ -10,7 +10,7 @@ import torch.distributed as dist
 import torch.nn.functional as F
 from torch.nn import TransformerEncoder, TransformerEncoderLayer
 from torch.distributions import Bernoulli
-from flash_attn.flash_attention import FlashMHA
+from flash_attn.modules.mha import MHA 
 from tqdm import trange
 
 from .grad_reverse import grad_reverse
@@ -815,7 +815,7 @@ class FlashTransformerEncoderLayer(nn.Module):
     ) -> None:
         factory_kwargs = {"device": device, "dtype": dtype}
         super().__init__()
-        self.self_attn = FlashMHA(
+        self.self_attn = MHA(
             embed_dim=d_model,
             num_heads=nhead,
             batch_first=batch_first,
@@ -882,7 +882,7 @@ class FlashTransformerEncoderLayer(nn.Module):
         else:
             if src_key_padding_mask.dtype != torch.bool:
                 src_key_padding_mask = src_key_padding_mask.bool()
-            # NOTE: the FlashMHA uses mask 0 for padding tokens, which is the opposite
+            # NOTE: the MHA uses mask 0 for padding tokens, which is the opposite
             src_key_padding_mask_ = ~src_key_padding_mask
 
         if self.norm_scheme == "pre":
