@@ -95,15 +95,62 @@ class scGPT_niche:
     def embed_spatial(self):
         """Train by embedding the dataset using scGPT_spatial."""
         colon_adata = sc.read_h5ad(self.colon_data_path)
+        # Keep only cells with at least one non-zero exp
+        # Make sure matrix is dense
+        if not isinstance(colon_adata.X, np.ndarray):
+            colon_adata.X = colon_adata.X.toarray()
+
+        good_genes_mask = ~colon_adata.var.index.str.contains("blank", case=False)
+
+        # Also remove 'RGS5' and 'WARS'
+        genes_to_remove = {"RGS5", "WARS"}
+        specific_genes_mask = ~colon_adata.var.index.isin(genes_to_remove)
+
+        # Combine both masks
+        final_good_genes_mask = good_genes_mask & specific_genes_mask
+
+        # Apply the mask and copy
+        colon_adata = colon_adata[:, final_good_genes_mask].copy()
+
+
+        logger.warning("Loaded colon dataset...")
+        logger.warning(f"Shape of colon dataset: {colon_adata.shape}")
+        
+        logger.warning("Embedding data using Pretrained Human scGPT Model...")
+        colon_adata.var["feature_name"] = colon_adata.var.index
+        colon_adata.X = colon_adata.X.astype(np.float32)
+        print("Shape before final filter:", colon_adata.shape)
+
+        X = colon_adata.X
+
+        row_sums = X.sum(axis=1)
+        num_zero_sum_rows = np.sum(row_sums == 0)
+        print("Number of rows that are entirely zero for these genes:", num_zero_sum_rows)
+
+        # If it's > 0, drop them:
+        if num_zero_sum_rows > 0:
+            keep = row_sums > 0
+            colon_adata = colon_adata[keep].copy()
+            print(f"Dropped {num_zero_sum_rows} zero-sum rows. Now shape={colon_adata.shape}")
+
+        print("Min # of expressed genes across cells:", (X > 0).sum(axis=1).min())
+
+
+            
+
         ref_embed_adata_spatial = scgpt_spatial.tasks.embed_data(
         colon_adata,
         model_dir=Path(self.model_path),
-        gene_col='feature_name',
+        gene_col= "feature_name",
         obs_to_save=list(colon_adata.obs.columns),
         batch_size=self.batch_size,
-        return_new_adata=True)
+        return_new_adata=True,
+        )
         logger.warning("Embedding done...")
         logger.warning(f"Shape of embedded data: {ref_embed_adata_spatial.shape}")
+        logger.warning("Embedding done...")
+        logger.warning(f"Shape of embedded data: {ref_embed_adata_spatial.shape}")
+        return ref_embed_adata_spatial
 
     
     def embed_niche(self):
