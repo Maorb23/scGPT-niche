@@ -13,7 +13,10 @@ import torch
 # from scgpt_spatial.utils import eval_scib_metrics
 
 # Add scgpt_spatial module to path
-sys.path.insert(0, "../")
+
+
+# Add the parent directory of train_TLS.py to Python's module search path
+sys.path.insert(0, str(Path(__file__).parent / "scGPT-spatial"))
 import scgpt_spatial
 
 warnings.filterwarnings("ignore", category=ResourceWarning)
