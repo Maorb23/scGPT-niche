@@ -17,6 +17,15 @@ from torch.utils.data import DataLoader, TensorDataset, random_split
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 import logging
+import sys
+from pathlib import Path
+
+# Add the parent directory of scGPT_spatial to sys.path
+sys.path.insert(0, str(Path(__file__).resolve().parent / "scGPT-spatial"))
+
+# Import scGPT_spatial and its utilities
+import scgpt_spatial
+from scgpt_spatial.utils import eval_scib_metrics
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -86,15 +95,62 @@ class scGPT_niche:
     def embed_spatial(self):
         """Train by embedding the dataset using scGPT_spatial."""
         colon_adata = sc.read_h5ad(self.colon_data_path)
+        # Keep only cells with at least one non-zero exp
+        # Make sure matrix is dense
+        if not isinstance(colon_adata.X, np.ndarray):
+            colon_adata.X = colon_adata.X.toarray()
+
+        good_genes_mask = ~colon_adata.var.index.str.contains("blank", case=False)
+
+        # Also remove 'RGS5' and 'WARS'
+        genes_to_remove = {"RGS5", "WARS"}
+        specific_genes_mask = ~colon_adata.var.index.isin(genes_to_remove)
+
+        # Combine both masks
+        final_good_genes_mask = good_genes_mask & specific_genes_mask
+
+        # Apply the mask and copy
+        colon_adata = colon_adata[:, final_good_genes_mask].copy()
+
+
+        logger.warning("Loaded colon dataset...")
+        logger.warning(f"Shape of colon dataset: {colon_adata.shape}")
+        
+        logger.warning("Embedding data using Pretrained Human scGPT Model...")
+        colon_adata.var["feature_name"] = colon_adata.var.index
+        colon_adata.X = colon_adata.X.astype(np.float32)
+        print("Shape before final filter:", colon_adata.shape)
+
+        X = colon_adata.X
+
+        row_sums = X.sum(axis=1)
+        num_zero_sum_rows = np.sum(row_sums == 0)
+        print("Number of rows that are entirely zero for these genes:", num_zero_sum_rows)
+
+        # If it's > 0, drop them:
+        if num_zero_sum_rows > 0:
+            keep = row_sums > 0
+            colon_adata = colon_adata[keep].copy()
+            print(f"Dropped {num_zero_sum_rows} zero-sum rows. Now shape={colon_adata.shape}")
+
+        print("Min # of expressed genes across cells:", (X > 0).sum(axis=1).min())
+
+
+            
+
         ref_embed_adata_spatial = scgpt_spatial.tasks.embed_data(
         colon_adata,
         model_dir=Path(self.model_path),
-        gene_col='feature_name',
+        gene_col= "feature_name",
         obs_to_save=list(colon_adata.obs.columns),
         batch_size=self.batch_size,
-        return_new_adata=True)
+        return_new_adata=True,
+        )
         logger.warning("Embedding done...")
         logger.warning(f"Shape of embedded data: {ref_embed_adata_spatial.shape}")
+        logger.warning("Embedding done...")
+        logger.warning(f"Shape of embedded data: {ref_embed_adata_spatial.shape}")
+        return ref_embed_adata_spatial
 
     
     def embed_niche(self):
@@ -320,10 +376,18 @@ if __name__ == "__main__":
     parser.add_argument("--model_path", default="ydata/models/best_model", help="Path to the scGPT model.")
     parser.add_argument("--batch_size", type=int, default=32, help="Batch size for training.")
     parser.add_argument("--fine_tune", default= False, action="store_true", help="Fine-tune the model.")
+    parser.add_argument("--embed", default=False, action="store_true", help="embed the model.")
+    parser.add_argument("--embed_spatial", default=False, action="store_true", help="embed the model.")
+    parser.add_argument("--embed_niche", default=False, action="store_true", help="embed the model.")
     args = parser.parse_args()
 
     scgpt_niche = scGPT_niche(args.colon_data_path, args.model_path, args.batch_size)
-    ref_embed_adata = scgpt_niche.embed()
+    if args.embed:
+        ref_embed_adata = scgpt_niche.embed()
+    if args.embed_spatial:
+        ref_embed_adata =scgpt_niche.embed_spatial()
+    if args.embed_niche:
+        ref_embed_adata = scgpt_niche.embed_niche()
     if args.fine_tune:
         linear_probe, train_losses, test_loss_list, f1_macro_train, f1_micro_train, f1_macro_test, f1_micro_test = scgpt_niche.fine_tune(ref_embed_adata)
         logger.warning(f"F1 Macro: {f1_macro_test:.4f}")
