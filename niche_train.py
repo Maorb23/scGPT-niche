@@ -6,10 +6,10 @@ import os
 from pathlib import Path
 import scanpy as sc
 import anndata
-import scgpt as scg
+#import scgpt as scg
 from torch import nn   
 import torch.optim as optim
-import umap
+#import umap
 from sklearn.metrics import f1_score, classification_report
 from torch.utils.data import DataLoader, TensorDataset, random_split
 import matplotlib.pyplot as plt
@@ -47,9 +47,9 @@ class scGPT_niche:
         import yaml
 
         from nicheformer.models import Nicheformer
-        from nicheformer.data import dataset as NicheformerDataset
+        from nicheformer.data import NicheformerDataset
         config = {
-        'technology_mean_path': 'data/model_means/merfish_mean_script.npy', #'path/to/technology_mean.npy',  # Path to technology mean file
+        'technology_mean_path': 'nicheformer/data/model_means/merfish_mean_script.npy', #'path/to/technology_mean.npy',  # Path to technology mean file
         #'checkpoint_path': '/lustre/groups/ml01/projects/2023_nicheformer/pretrained_models/everything_heads_16_blocks_12_maxsteps_30661140_FINAL/epoch=1-step=265000.ckpt',  # Path to model checkpoint
         'batch_size': 32,
         'max_seq_len': 1500, 
@@ -69,13 +69,18 @@ class scGPT_niche:
         adata.obs['modality'] = 4 # Spatial, Does it mean that it uses spatial context or does it mean That I need to add a spatial context?
         adata.obs['specie'] = 5 # human
         adata.obs['assay'] = 7 #Merfish
-        technology_mean = np.load(config['technology_mean_path'])
-
+        technology_mean = np.load(config['technology_mean_path'])[:385]
+        print(technology_mean[:10])
+        # Ensure 'nicheformer_split' column exists in adata.obs
+        if 'nicheformer_split' not in adata.obs.columns:
+            adata.obs['nicheformer_split'] = 'train'  # Assign all rows to 'train' by default
+        print(f"adata shape: {adata.shape}")
+    
         # Create dataset for all cells (no train/val/test split needed)
         dataset = NicheformerDataset(
             adata=adata,
             technology_mean=technology_mean,
-            split=None,  # Use all cells
+            split='train',  # Use all cells
             max_seq_len=config.get('max_seq_len', 4096),
             aux_tokens=config.get('aux_tokens', 30),
             chunk_size=config.get('chunk_size', 1000)
@@ -91,14 +96,14 @@ class scGPT_niche:
         )
 
         # Load pre-trained model
-        model = ad.read_h5ad('data/model_means/model.h5ad')
+        model = Nicheformer.load_from_checkpoint('ydata/models/best_model_niche/nicheformer.ckpt')
         model.eval()  # Set to evaluation mode
 
         # Configure trainer
         trainer = pl.Trainer(
             accelerator='gpu' if torch.cuda.is_available() else 'cpu',
             devices=1,
-            default_root_dir=config['output_dir'],
+            default_root_dir='ydata/models/best_model_niche',  #config['output_dir'],
             precision=config.get('precision', 32),
         )
 
