@@ -63,13 +63,13 @@ def EDA_plots(colon_adata, dataset_path):
 
 
 @task
-def train_task(colon_path: str, model_path: str,model_path_spatial: str,  batch_size: int,fine_tune):
+def train_task(colon_path: str, model_path: str,model_path_spatial: str,  batch_size: int,fine_tune,epochs = 35):
 
     trainer = scGPT_niche(colon_path, model_path, model_path_spatial, batch_size,fine_tune)
     colon_adata = sc.read_h5ad(colon_path)
     ref_embed_adata = trainer.embed_spatial()
     if fine_tune:
-        linear_probe, train_losses, test_loss_list, f1_macro_train, f1_micro_train, f1_macro_test, f1_micro_test = trainer.fine_tune(ref_embed_adata)
+        linear_probe, train_losses, test_loss_list, f1_macro_train, f1_micro_train, f1_macro_test, f1_micro_test = trainer.fine_tune(ref_embed_adata, epochs)
     # Randomly select 10 indices
     num_samples = min(10, ref_embed_adata.shape[0])
     random_indices = np.random.choice(ref_embed_adata.shape[0], size=num_samples, replace=False)
@@ -141,7 +141,7 @@ def custom_plot_umap(positive_class, negative_class, cell_types, emb, desc):
 
 @flow(name="scGPT Training and UMAP Flow")
 def main_flow(dataset_path: str, colon_path, model_path: str,model_path_spatial: str,  batch_size: int = 128, train: bool = False, plot: bool = False,
-        preprocess: bool = False, custom_plot: bool = False, eda_plots: bool = False, fine_tune = False):
+        preprocess: bool = False, custom_plot: bool = False, eda_plots: bool = False, fine_tune = False,epochs = 35):
     """Flow to train the model and plot UMAP."""
     try:
         wandb.init(
@@ -164,9 +164,9 @@ def main_flow(dataset_path: str, colon_path, model_path: str,model_path_spatial:
         EDA_plots(colon_adata, dataset_path)
     if train:
         if fine_tune:
-            ref_embed_adata, linear_probe, train_losses, test_loss_list, f1_macro_train, f1_micro_train, f1_macro_test, f1_micro_test = train_task(colon_path, model_path, batch_size, fine_tune) 
+            ref_embed_adata, linear_probe, train_losses, test_loss_list, f1_macro_train, f1_micro_train, f1_macro_test, f1_micro_test = train_task(colon_path, model_path,model_path_spatial, batch_size, fine_tune, epochs) 
         else:
-            ref_embed_adata = train_task(colon_path, model_path, model_path_spatial, batch_size, fine_tune)
+            ref_embed_adata = train_task(colon_path, model_path, model_path_spatial, batch_size, fine_tune, epochs)
     if plot:
         plot_task(ref_embed_adata)
     #if custom_plot:
@@ -191,6 +191,7 @@ if __name__ == "__main__":
     parser.add_argument("--batch_size", type=int, default=32,  help="Batch size for embedding.")
     parser.add_argument("--train", action="store_true", help="Whether to train the model.")
     parser.add_argument("--plot", action="store_true", help="Whether to plot UMAP.")
+    parser.add_argument("--epochs", type=int, default=35,  help="Epochs for Fine Tuning.")
     parser.add_argument("--preprocess", action="store_true", help="Whether to preprocess the data.")
     parser.add_argument("--custom_plot", action="store_true", help="Whether to create a custom UMAP plot.")
     parser.add_argument("--eda_plots", action="store_true", help="Whether to create EDA plots.")
@@ -209,6 +210,7 @@ if __name__ == "__main__":
         preprocess=args.preprocess,
         custom_plot=args.custom_plot,
         eda_plots=args.eda_plots,
-        fine_tune=args.fine_tune
+        fine_tune=args.fine_tune,
+        epochs = args.epochs
     )
 

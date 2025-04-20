@@ -1,7 +1,5 @@
 #!/usr/bin/env python
 # coding: utf-8
-import matplotlib
-matplotlib.use('Agg')
 
 import sys
 from pathlib import Path
@@ -36,9 +34,6 @@ def run_embedding_and_plotting():
     gene_col = 'feature_name'
     cell_type_col = 'celltype'
     batch_id_col = 'batch_id'
-    # Ensure dense matrix
-    if not isinstance(adata.X, np.ndarray):
-        adata.X = adata.X.toarray()
 
     ref_embed_adata = scgpt_spatial.tasks.embed_data(
         adata,
@@ -51,8 +46,6 @@ def run_embedding_and_plotting():
 
     ref_embed_adata.obsm['X'] = ref_embed_adata.X.copy()
     ref_embed_adata.obs['batch_id'] = adata.obs['batch_id']
-    print("Embedding shape:", ref_embed_adata.obsm['X'].shape)
-
 
     # --- Optional Step: Eval ---
     # result_dict = eval_scib_metrics(ref_embed_adata, batch_key=batch_id_col, label_key=cell_type_col)
@@ -61,31 +54,16 @@ def run_embedding_and_plotting():
     # --- Step 3: UMAP and Plots ---
     sc.pp.neighbors(ref_embed_adata, use_rep="X")
     sc.tl.umap(ref_embed_adata)
-    print("UMAP coords shape:", ref_embed_adata.obsm['X_umap'].shape)
 
     custom_palette = ['#23b3b3', '#ff8a5b', '#6aa84f', '#8e44ad', '#f1c40f']
     sc.pl.umap(ref_embed_adata, color=cell_type_col, palette=custom_palette, frameon=False, show=False, wspace=0.4)
     plt.savefig("umap_cell_labels.png", dpi=300, bbox_inches="tight")
 
     custom_palette = ['#4a6fa5', '#ea9999', '#9b6bd3', '#52c3a3', '#d8c656', '#6aa84f']
-    # Set a compact figure size and higher DPI
-    sc.pl.umap(
-    ref_embed_adata,
-    color='batch_id',
-    palette=custom_palette,
-    frameon=True,   # ← show axes again
-    show=False
-    )
-
-
-    plt.title("UMAP by Batch", fontsize=14, weight='bold', pad=10)
-    plt.tight_layout()
-    plt.savefig("umap_batch_labels_clean.png", dpi=300, bbox_inches='tight')
-    plt.close()
-
+    sc.pl.umap(ref_embed_adata, color='batch_id', palette=custom_palette, frameon=False, show=False, wspace=0.4)
+    plt.savefig("umap_batch_labels.png", dpi=300, bbox_inches="tight")
 
     print("✅ Embedding + UMAP complete. Images saved.")
-    plt.close('all')
 
 # --- Main Entry ---
 if __name__ == "__main__":

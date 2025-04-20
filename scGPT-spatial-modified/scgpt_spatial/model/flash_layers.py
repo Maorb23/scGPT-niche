@@ -9,10 +9,10 @@ import torch.nn.functional as F
 from torch import Tensor
 from torch.nn.modules.transformer import _get_clones
 
-#from flash_attn.flash_attn_interface import flash_attn_unpadded_qkvpacked_func
-#from flash_attn.bert_padding import unpad_input, pad_input
-#from flash_attn.flash_attention import FlashAttention
-#from flash_attn.modules.mha import FlashCrossAttention
+from flash_attn.flash_attn_interface import flash_attn_varlen_qkvpacked_func
+from flash_attn.bert_padding import unpad_input, pad_input
+from flash_attn import flash_attn_func
+from flash_attn.modules.mha import FlashCrossAttention
 from .layers import MultiheadAttention
 
 
@@ -49,7 +49,7 @@ class FlashscGPTMHA(nn.Module):
         ), "Only support head_dim <= 128 and divisible by 8"
 
         self.Wqkv = nn.Linear(embed_dim, 3 * embed_dim, bias=bias, **factory_kwargs)
-        self.self_attn = FlashAttention(attention_dropout=attention_dropout)
+        self.self_attn = flash_attn_func(dropout_p=attention_dropout)
         self.cross_attn = MultiheadAttention(
             embed_dim,
             num_heads,
@@ -190,7 +190,7 @@ class FlashscGPTMHA(nn.Module):
 class FlashscGPTLayer(nn.Module):
     r"""TransformerEncoderLayer is made up of self-attn and feedforward network.
     The class is modified from torch.nn.TransformerEncoderLayer to support the
-    FlashAttention.
+    flash_attn_func.
 
     Args:
         d_model: the number of expected features in the input (required).

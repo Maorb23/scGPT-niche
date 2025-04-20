@@ -133,9 +133,9 @@ def train_task(dataset_path: str, model_path: str, batch_size: int):
 @task
 def train_task(colon_path: str, model_path: str, batch_size: int,fine_tune):
 
-    trainer = scGPT_niche(colon_path, model_path, batch_size,fine_tune)
+    trainer = scGPT_niche(colon_path, model_path,model_path_spatial, batch_size,fine_tune)
     colon_adata = sc.read_h5ad(colon_path)
-    ref_embed_adata = trainer.embed()
+    ref_embed_adata = trainer.embed_spatial()
     if fine_tune:
         linear_probe, train_losses, test_loss_list, f1_macro_train, f1_micro_train, f1_macro_test, f1_micro_test = trainer.fine_tune(ref_embed_adata)
     # Randomly select 10 indices
