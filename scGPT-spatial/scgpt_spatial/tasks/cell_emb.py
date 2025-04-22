@@ -225,7 +225,7 @@ def embed_data(
     batch_size=64,
     obs_to_save: Optional[list] = None,
     device: Union[str, torch.device] = "cuda",
-    use_fast_transformer: bool = False,
+    use_fast_transformer: bool = True,
     return_new_adata: bool = False,
 ) -> AnnData:
     """
