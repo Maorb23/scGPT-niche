@@ -265,11 +265,75 @@ class scGPT_niche:
         logger.warning(f"Shape of embedded data: {embeddings.shape}")
         logger.warning("Embedding done...")
         logger.warning(f"Shape of embedded data: {embeddings.shape}")
+
     
-    def fine_tune(self, ref_embed_adata, epochs=25, optimizer_type="adam"):
+
+    def smooth_embeddings(
+        E0: np.ndarray,
+        coords: np.ndarray,
+        sigma: float = 100.0,
+        eta: float = 0.1,
+        max_iters: int = 50,
+        tol: float = 1e-3,
+    ) -> np.ndarray:
+        """
+        Spatially smooth scGPT embeddings via teleporting random‐walk iteration.
+
+        Args:
+        E0         : ndarray of shape (N, d), original scGPT embeddings.
+        coords     : ndarray of shape (N, 2), x/y positions for each cell.
+        sigma      : float, kernel bandwidth for adjacency.
+        eta        : float in (0,1), teleport weight (fraction of E0 re-injected).
+        max_iters  : int, maximum number of fixed-point iterations.
+        tol        : float, convergence threshold on ||E_new − E_old||_F.
+
+        Returns:
+        E_smoothed : ndarray of shape (N, d), the smoothed embeddings.
+        """
+        from scipy.spatial.distance import pdist, squareform
+        N, d = E0.shape
+        assert coords.shape[0] == N, "coords and E0 must have same number of rows"
+        assert 0.0 < eta < 1.0
+
+        # 1) Compute pairwise squared distances and Gaussian affinities
+        D2 = squareform(pdist(coords, metric="sqeuclidean"))       # (N, N)
+        W  = np.exp(-D2 / (2 * sigma**2))
+        np.fill_diagonal(W, 0.0)                                   # zero self‐edges
+
+        # 2) Row‐normalize to get transition matrix A = D^{-1} W
+        deg = W.sum(axis=1)                                        # (N,)
+        # avoid divide‐by‐zero
+        deg[deg == 0] = 1.0
+        A = W / deg[:, None]                                       # broadcasting
+
+        # 3) Teleportation iteration: E <- (1−eta) A E + eta E0
+        E = E0.copy()
+        for i in range(max_iters):
+            E_next = (1 - eta) * (A @ E) + eta * E0
+            diff   = np.linalg.norm(E_next - E, ord="fro")
+            E       = E_next
+            if diff < tol:
+                # converged
+                break
+
+        return E
+
+    # --- example usage ---
+    # coords = data_comp.obsm['spatial']           # shape (N,2)
+    # E0, d = ref_emb_adata.obsm['X_scGPT'], 512   # or however you store it
+    # E_smooth = smooth_embeddings(E0, coords,
+    #                              sigma=200.0,
+    #                              eta=0.1,
+    #                              max_iters=100,
+    #                              tol=1e-4)
+
+    
+    def fine_tune(self, ref_embed_adata, epochs=25, optimizer_type="adam", laplacian = True):
         train_losses = []
         test_loss_list = []
         emb = ref_embed_adata.X  # shape (n_cells, n_genes)
+        if laplacian:
+            emb = self.compute_laplacian(emb)
         # Instead of nn.Linear(512, 2)
         linear_probe = nn.Sequential(
         nn.Linear(512, 128),
