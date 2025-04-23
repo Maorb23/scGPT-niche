@@ -9,10 +9,10 @@ import torch.nn.functional as F
 from torch import Tensor
 from torch.nn.modules.transformer import _get_clones
 
-#from flash_attn.flash_attn_interface import flash_attn_unpadded_qkvpacked_func
-#from flash_attn.bert_padding import unpad_input, pad_input
-#from flash_attn.flash_attention import FlashAttention
-#from flash_attn.modules.mha import FlashCrossAttention
+from flash_attn.flash_attn_interface import flash_attn_unpadded_qkvpacked_func
+from flash_attn.bert_padding import unpad_input, pad_input
+from flash_attn.flash_attention import FlashAttention
+from flash_attn.modules.mha import FlashCrossAttention
 from .layers import MultiheadAttention
 
 
