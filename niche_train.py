@@ -287,12 +287,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     scgpt_niche = scGPT_niche(args.colon_data_path, args.model_path, args.model_path_spatial, args.batch_size, args.fine_tune)
-    if args.embed:
-        ref_embed_adata = scgpt_niche.embed()
-    if args.embed_spatial:
-        ref_embed_adata =scgpt_niche.embed_spatial()
-    if args.embed_niche:
-        ref_embed_adata = scgpt_niche.embed_niche()
+    ref_embed_adata = scgpt_niche.embed_niche()
     if args.fine_tune:
         linear_probe, train_losses, test_loss_list, f1_macro_train, f1_micro_train, f1_macro_test, f1_micro_test = scgpt_niche.fine_tune(ref_embed_adata)
         logger.warning(f"F1 Macro: {f1_macro_test:.4f}")

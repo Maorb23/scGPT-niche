@@ -60,7 +60,7 @@ class scGPT_niche:
 
         # Apply the mask and copy
         colon_adata = colon_adata[:, final_good_genes_mask].copy()
-
+        
 
         logger.warning("Loaded colon dataset...")
         logger.warning(f"Shape of colon dataset: {colon_adata.shape}")
@@ -117,7 +117,7 @@ class scGPT_niche:
 
         # Apply the mask and copy
         colon_adata = colon_adata[:, final_good_genes_mask].copy()
-
+        self.final_data = colon_adata
 
         logger.warning("Loaded colon dataset...")
         logger.warning(f"Shape of colon dataset: {colon_adata.shape}")
@@ -266,57 +266,52 @@ class scGPT_niche:
         logger.warning("Embedding done...")
         logger.warning(f"Shape of embedded data: {embeddings.shape}")
 
-    
 
+    
     def smooth_embeddings(
-        E0: np.ndarray,
-        coords: np.ndarray,
-        sigma: float = 100.0,
-        eta: float = 0.1,
-        max_iters: int = 50,
-        tol: float = 1e-3,
+        self,
+        E0: np.ndarray,         # (N, d) scGPT embeddings
+        coords: np.ndarray,     # (N, 2) spatial positions
+        sigma: float     = 200,
+        eta: float       = 0.5,
+        n_neighbors: int = 50,
+        max_iters: int   = 50,
+        tol: float       = 1e-3,
     ) -> np.ndarray:
         """
-        Spatially smooth scGPT embeddings via teleporting random‐walk iteration.
-
-        Args:
-        E0         : ndarray of shape (N, d), original scGPT embeddings.
-        coords     : ndarray of shape (N, 2), x/y positions for each cell.
-        sigma      : float, kernel bandwidth for adjacency.
-        eta        : float in (0,1), teleport weight (fraction of E0 re-injected).
-        max_iters  : int, maximum number of fixed-point iterations.
-        tol        : float, convergence threshold on ||E_new − E_old||_F.
-
-        Returns:
-        E_smoothed : ndarray of shape (N, d), the smoothed embeddings.
+        Sparse k-NN teleportation smoothing:
+          E <- (1-eta)*A @ E + eta*E0
+        without ever building a dense N×N matrix.
         """
-        from scipy.spatial.distance import pdist, squareform
+        from sklearn.neighbors import NearestNeighbors
+        from scipy.sparse import csr_matrix
         N, d = E0.shape
-        assert coords.shape[0] == N, "coords and E0 must have same number of rows"
-        assert 0.0 < eta < 1.0
+        # 1) k-NN graph (coords → neighbor indices + distances)
+        knn = NearestNeighbors(n_neighbors=n_neighbors+1).fit(coords)
+        dist, idx = knn.kneighbors(coords)
+        dist, idx = dist[:,1:], idx[:,1:]            # drop self (col 0)
 
-        # 1) Compute pairwise squared distances and Gaussian affinities
-        D2 = squareform(pdist(coords, metric="sqeuclidean"))       # (N, N)
-        W  = np.exp(-D2 / (2 * sigma**2))
-        np.fill_diagonal(W, 0.0)                                   # zero self‐edges
+        # 2) Gaussian weights & normalize rows → transition probs
+        W = np.exp(-dist**2 / (2*sigma**2))           # (N, k)
+        row_sums = W.sum(axis=1, keepdims=True)       # (N, 1)
+        P = W / np.maximum(row_sums, 1e-12)           # (N, k)
 
-        # 2) Row‐normalize to get transition matrix A = D^{-1} W
-        deg = W.sum(axis=1)                                        # (N,)
-        # avoid divide‐by‐zero
-        deg[deg == 0] = 1.0
-        A = W / deg[:, None]                                       # broadcasting
+        # 3) build sparse A matrix
+        rows = np.repeat(np.arange(N), n_neighbors)
+        cols = idx.ravel()
+        data = P.ravel()
+        A    = csr_matrix((data, (rows, cols)), shape=(N, N))
 
-        # 3) Teleportation iteration: E <- (1−eta) A E + eta E0
+        # 4) teleportation iterations
         E = E0.copy()
-        for i in range(max_iters):
-            E_next = (1 - eta) * (A @ E) + eta * E0
-            diff   = np.linalg.norm(E_next - E, ord="fro")
-            E       = E_next
-            if diff < tol:
-                # converged
+        for _ in range(max_iters):
+            E_next = (1 - eta) * (A.dot(E)) + eta * E0
+            if np.linalg.norm(E_next - E, ord='fro') < tol:
                 break
+            E = E_next
 
         return E
+       
 
     # --- example usage ---
     # coords = data_comp.obsm['spatial']           # shape (N,2)
@@ -333,7 +328,41 @@ class scGPT_niche:
         test_loss_list = []
         emb = ref_embed_adata.X  # shape (n_cells, n_genes)
         if laplacian:
-            emb = self.compute_laplacian(emb)
+            colon_adata = sc.read_h5ad("ydata/data/Vizgen-hCRC-1313910_VS39.h5ad")
+            if not isinstance(colon_adata.X, np.ndarray):
+                colon_adata.X = colon_adata.X.toarray()
+
+            good_genes_mask = ~colon_adata.var.index.str.contains("blank", case=False)
+
+            # Also remove 'RGS5' and 'WARS'
+            genes_to_remove = {"RGS5", "WARS"}
+            specific_genes_mask = ~colon_adata.var.index.isin(genes_to_remove)
+
+            # Combine both masks
+            final_good_genes_mask = good_genes_mask & specific_genes_mask
+
+            # Apply the mask and copy
+            colon_adata = colon_adata[:, final_good_genes_mask].copy()
+            X = colon_adata.X
+
+            row_sums = X.sum(axis=1)
+            num_zero_sum_rows = np.sum(row_sums == 0)
+            print("Number of rows that are entirely zero for these genes:", num_zero_sum_rows)
+
+            # If it's > 0, drop them:
+            if num_zero_sum_rows > 0:
+                keep = row_sums > 0
+                colon_adata = colon_adata[keep].copy()
+
+
+            coords = colon_adata.obsm['spatial']           # shape (N,2)   # or however you store i
+            print(f"Dropped {num_zero_sum_rows} zero-sum rows. Now shape={coords.shape}")
+            print(f"Embs shape. Now shape={emb.shape}")
+            emb = self.smooth_embeddings(emb, coords,
+                                  sigma=200.0,
+                                  eta=0.1,
+                                  max_iters=100,
+                                  tol=1e-4)
         # Instead of nn.Linear(512, 2)
         linear_probe = nn.Sequential(
         nn.Linear(512, 128),
@@ -347,8 +376,6 @@ class scGPT_niche:
             optimizer = optim.SGD(linear_probe.parameters(), lr=1e-3, momentum=0.9, weight_decay=1e-4)
         else:
             raise ValueError(f"Unsupported optimizer type: {optimizer_type}")
-        # Extract embeddings and labels
-        emb = ref_embed_adata.X  # shape (n_cells, n_genes)
         region_labels = ref_embed_adata.obs['region'].values
 
         # Map labels to integers
